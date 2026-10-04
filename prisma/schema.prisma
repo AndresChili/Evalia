@@ -1,0 +1,408 @@
+// Prisma schema — Evalia
+// Convenciones: snapshots inmutables para Test/Question/AnswerOption una vez generados,
+// para que un test guardado sea siempre reproducible aunque el Document origen se borre.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- Auth ----------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile  Profile?
+  accounts Account[]
+  sessions Session[]
+
+  documents  Document[]
+  tests      Test[]
+  savedTests SavedTest[]
+  attempts   TestAttempt[]
+
+  sentFriendRequests     FriendshipRequest[] @relation("SentFriendRequests")
+  receivedFriendRequests FriendshipRequest[] @relation("ReceivedFriendRequests")
+  friendshipsAsA         Friendship[]        @relation("FriendshipUserA")
+  friendshipsAsB         Friendship[]        @relation("FriendshipUserB")
+
+  sharedTestsSent     SharedTest[] @relation("SharedTestSender")
+  sharedTestsReceived SharedTest[] @relation("SharedTestRecipient")
+
+  notifications       Notification[]
+  passwordResetTokens PasswordResetToken[]
+  usageQuota          UsageQuota?
+
+  @@index([email])
+}
+
+model Profile {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  displayName    String
+  avatarPathname String? // pathname en el store privado de Blob; se sirve vía /api/avatars/[userId]
+  bio            String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Modelos estándar de Auth.js (soporte futuro de OAuth; credentials no los usa hoy).
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------- Documentos y pipeline de extracción ----------
+
+enum DocumentStatus {
+  PENDING
+  EXTRACTING
+  READY
+  FAILED
+}
+
+model Document {
+  id               String         @id @default(cuid())
+  userId           String
+  originalFilename String
+  mimeType         String
+  sizeBytes        Int
+  blobUrl          String? // null una vez borrado el archivo original
+  blobDeletedAt    DateTime?
+  extractedText    String? // texto plano extraído; fuente de verdad para generación
+  status           DocumentStatus @default(PENDING)
+  pageCount        Int?
+  charCount        Int?
+  errorMessage     String?
+  createdAt        DateTime       @default(now())
+  expiresAt        DateTime? // borrado automático programado del archivo original
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chunks DocumentChunk[]
+  tests  Test[]
+
+  @@index([userId])
+}
+
+model DocumentChunk {
+  id         String @id @default(cuid())
+  documentId String
+  index      Int
+  content    String
+  charStart  Int
+  charEnd    Int
+
+  document  Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@unique([documentId, index])
+}
+
+// ---------- Tests (snapshot inmutable) ----------
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+}
+
+enum Difficulty {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ScoringType {
+  NO_PENALTY
+  CUSTOM_PENALTY // resta `penaltyValue` puntos por fallo
+  GROUPED_PENALTY // cada `penaltyGroupSize` fallos resta 1 punto
+}
+
+enum TestStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+model Test {
+  id         String  @id @default(cuid())
+  userId     String // creador original
+  documentId String? // nullable: el Document origen puede borrarse sin romper el Test
+  title      String
+
+  questionType  QuestionType
+  optionsCount  Int? // solo aplica a MULTIPLE_CHOICE
+  questionCount Int
+  difficulty    Difficulty
+
+  scoringType      ScoringType
+  penaltyValue     Decimal?    @db.Decimal(4, 2) // CUSTOM_PENALTY, ej. 0.33
+  penaltyGroupSize Int? // GROUPED_PENALTY, ej. 3
+
+  status          TestStatus @default(GENERATING)
+  discardedCount  Int        @default(0) // preguntas descartadas por validación
+  generationError String?
+
+  // Si este Test es una copia aceptada de un SharedTest, referencia al original.
+  originTestId String?
+  originTest   Test?   @relation("TestCopy", fields: [originTestId], references: [id], onDelete: SetNull)
+  copies       Test[]  @relation("TestCopy")
+
+  createdAt DateTime @default(now())
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  document  Document?     @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  questions Question[]
+  savedBy   SavedTest[]
+  attempts  TestAttempt[]
+  sharedAs  SharedTest[]
+
+  @@index([userId])
+  @@index([documentId])
+}
+
+model Question {
+  id          String       @id @default(cuid())
+  testId      String
+  chunkId     String? // referencia al fragmento origen (puede perderse si se borra el Document)
+  type        QuestionType
+  prompt      String
+  explanation String?
+  difficulty  Difficulty
+  sourceQuote String? // cita literal copiada del documento, para trazabilidad aunque se borre el chunk
+  orderIndex  Int
+
+  test    Test           @relation(fields: [testId], references: [id], onDelete: Cascade)
+  chunk   DocumentChunk? @relation(fields: [chunkId], references: [id], onDelete: SetNull)
+  options AnswerOption[]
+  answers UserAnswer[]
+
+  @@unique([testId, orderIndex])
+}
+
+model AnswerOption {
+  id         String  @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean
+  orderIndex Int
+
+  question Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers  UserAnswer[]
+
+  @@unique([questionId, orderIndex])
+}
+
+model SavedTest {
+  id      String   @id @default(cuid())
+  userId  String
+  testId  String
+  savedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, testId])
+}
+
+// ---------- Realización de tests ----------
+
+enum TestMode {
+  STUDY
+  EXAM
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model TestAttempt {
+  id     String        @id @default(cuid())
+  testId String
+  userId String
+  mode   TestMode
+  status AttemptStatus @default(IN_PROGRESS)
+
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  correctCount    Int     @default(0)
+  incorrectCount  Int     @default(0)
+  unansweredCount Int     @default(0)
+  rawScore        Decimal @default(0) @db.Decimal(6, 2) // nº correctas, antes de penalización
+  penaltyApplied  Decimal @default(0) @db.Decimal(6, 2)
+  finalScore      Decimal @default(0) @db.Decimal(6, 2)
+
+  test    Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers UserAnswer[]
+
+  @@index([testId])
+  @@index([userId])
+}
+
+model UserAnswer {
+  id               String   @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOptionId String? // null = sin contestar
+  isCorrect        Boolean?
+  answeredAt       DateTime @default(now())
+
+  attempt        TestAttempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question       Question      @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption AnswerOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  @@unique([attemptId, questionId])
+}
+
+// ---------- Social ----------
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model FriendshipRequest {
+  id          String              @id @default(cuid())
+  fromUserId  String
+  toUserId    String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  respondedAt DateTime?
+
+  fromUser User @relation("SentFriendRequests", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("ReceivedFriendRequests", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+  @@index([toUserId])
+}
+
+// Fila normalizada: userAId siempre < userBId (aplicado en lógica de aplicación).
+model Friendship {
+  id        String   @id @default(cuid())
+  userAId   String
+  userBId   String
+  createdAt DateTime @default(now())
+
+  userA User @relation("FriendshipUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("FriendshipUserB", fields: [userBId], references: [id], onDelete: Cascade)
+
+  @@unique([userAId, userBId])
+  @@index([userBId])
+}
+
+enum SharedTestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model SharedTest {
+  id          String           @id @default(cuid())
+  testId      String // test guardado original del remitente
+  fromUserId  String
+  toUserId    String
+  status      SharedTestStatus @default(PENDING)
+  sharedAt    DateTime         @default(now())
+  respondedAt DateTime?
+
+  test     Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+  fromUser User @relation("SharedTestSender", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User @relation("SharedTestRecipient", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([toUserId])
+}
+
+enum NotificationType {
+  FRIEND_REQUEST_RECEIVED
+  FRIEND_REQUEST_ACCEPTED
+  TEST_SHARED
+  TEST_GENERATION_READY
+  TEST_GENERATION_FAILED
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  payload   Json
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+// ---------- Costes / cuotas ----------
+
+// Contador simple de uso diario por usuario; reiniciado por lógica de aplicación al cambiar de día.
+model UsageQuota {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  periodStart        DateTime // inicio del día (UTC) del periodo actual
+  generationsUsed    Int      @default(0)
+  questionsGenerated Int      @default(0)
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
