@@ -125,12 +125,16 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
                 <SelectValue placeholder="Selecciona un documento" />
               </SelectTrigger>
               <SelectContent>
-                {documents.map((doc) => (
-                  <SelectItem key={doc.id} value={doc.id}>
-                    {doc.originalFilename}
-                    {doc.charCount ? ` (${doc.charCount.toLocaleString("es-ES")} car.)` : ""}
-                  </SelectItem>
-                ))}
+                {documents.map((doc) => {
+                  const label = doc.charCount
+                    ? `${doc.originalFilename} (${doc.charCount.toLocaleString("es-ES")} car.)`
+                    : doc.originalFilename;
+                  return (
+                    <SelectItem key={doc.id} value={doc.id} label={label}>
+                      {label}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           )}
