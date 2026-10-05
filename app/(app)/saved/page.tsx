@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getFriendsForShare } from "@/lib/friends";
+import { ShareTestButton } from "@/components/tests/share-test-button";
 
 export const metadata: Metadata = { title: "Tests guardados" };
 
@@ -18,6 +20,7 @@ export default async function SavedTestsPage() {
     orderBy: { savedAt: "desc" },
     include: { test: { include: { _count: { select: { questions: true } } } } },
   });
+  const friends = await getFriendsForShare(session.user.id);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -35,13 +38,17 @@ export default async function SavedTestsPage() {
       ) : (
         <ul className="divide-border border-border divide-y rounded-lg border">
           {saved.map(({ test }) => (
-            <li key={test.id} className="px-4 py-3">
-              <Link href={`/tests/${test.id}`} className="text-sm font-medium hover:underline">
-                {test.title}
-              </Link>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                {test._count.questions} preguntas · {DIFFICULTY_LABEL[test.difficulty]}
-              </p>
+            <li key={test.id} className="hover:bg-muted/50 relative flex items-center justify-between gap-4 px-4 py-3">
+              <Link href={`/tests/${test.id}`} className="absolute inset-0 z-0" aria-label={test.title} />
+              <div className="pointer-events-none min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{test.title}</p>
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {test._count.questions} preguntas · {DIFFICULTY_LABEL[test.difficulty]}
+                </p>
+              </div>
+              <div className="relative z-10 shrink-0">
+                <ShareTestButton testId={test.id} friends={friends} />
+              </div>
             </li>
           ))}
         </ul>

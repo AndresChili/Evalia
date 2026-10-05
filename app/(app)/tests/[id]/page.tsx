@@ -4,8 +4,6 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { SaveTestButton } from "@/components/tests/save-test-button";
-import { ShareTestButton } from "@/components/tests/share-test-button";
 import { StartAttemptButtons } from "@/components/tests/start-attempt-buttons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -25,7 +23,6 @@ export default async function TestReviewPage({ params }: Props) {
     where: { id },
     include: {
       questions: { include: { options: true }, orderBy: { orderIndex: "asc" } },
-      savedBy: { where: { userId: session.user.id } },
       attempts: {
         where: { userId: session.user.id, status: "COMPLETED" },
         orderBy: { finishedAt: "desc" },
@@ -62,15 +59,6 @@ export default async function TestReviewPage({ params }: Props) {
     );
   }
 
-  const friendships = await db.friendship.findMany({
-    where: { OR: [{ userAId: session.user.id }, { userBId: session.user.id }] },
-    include: { userA: { include: { profile: true } }, userB: { include: { profile: true } } },
-  });
-  const friends = friendships.map((f) => {
-    const other = f.userAId === session.user.id ? f.userB : f.userA;
-    return { id: other.id, displayName: other.profile?.displayName ?? other.email };
-  });
-
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div>
@@ -83,12 +71,7 @@ export default async function TestReviewPage({ params }: Props) {
         </p>
       </div>
 
-      <div className="flex items-start justify-between gap-3">
-        <StartAttemptButtons testId={test.id} />
-        <SaveTestButton testId={test.id} initialSaved={test.savedBy.length > 0} />
-      </div>
-
-      <ShareTestButton testId={test.id} friends={friends} />
+      <StartAttemptButtons testId={test.id} />
 
       {test.attempts.length > 0 && (
         <div>

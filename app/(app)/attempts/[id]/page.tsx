@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getFriendsForShare } from "@/lib/friends";
 import { ResultsView } from "@/components/attempts/results-view";
 import { TestTakingView } from "@/components/attempts/test-taking-view";
 
@@ -20,7 +21,10 @@ export default async function AttemptPage({ params }: Props) {
     include: {
       answers: true,
       test: {
-        include: { questions: { include: { options: true }, orderBy: { orderIndex: "asc" } } },
+        include: {
+          questions: { include: { options: true }, orderBy: { orderIndex: "asc" } },
+          savedBy: { where: { userId: session.user.id } },
+        },
       },
     },
   });
@@ -47,9 +51,14 @@ export default async function AttemptPage({ params }: Props) {
       };
     });
 
+    const friends = await getFriendsForShare(session.user.id);
+
     return (
       <ResultsView
+        testId={attempt.test.id}
         testTitle={attempt.test.title}
+        initialSaved={attempt.test.savedBy.length > 0}
+        friends={friends}
         correctCount={attempt.correctCount}
         incorrectCount={attempt.incorrectCount}
         unansweredCount={attempt.unansweredCount}

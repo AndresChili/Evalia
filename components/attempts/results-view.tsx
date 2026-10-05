@@ -1,6 +1,11 @@
 import Link from "next/link";
 
+import { ScrollToTop } from "@/components/attempts/scroll-to-top";
+import { SaveTestButton } from "@/components/tests/save-test-button";
+import { ShareTestButton } from "@/components/tests/share-test-button";
 import { Button } from "@/components/ui/button";
+
+type Friend = { id: string; displayName: string };
 
 type QuestionReview = {
   id: string;
@@ -12,7 +17,10 @@ type QuestionReview = {
 };
 
 type ResultsViewProps = {
+  testId: string;
   testTitle: string;
+  initialSaved: boolean;
+  friends: Friend[];
   correctCount: number;
   incorrectCount: number;
   unansweredCount: number;
@@ -36,7 +44,10 @@ const STATUS_CLASS: Record<QuestionReview["status"], string> = {
 };
 
 export function ResultsView({
+  testId,
   testTitle,
+  initialSaved,
+  friends,
   correctCount,
   incorrectCount,
   unansweredCount,
@@ -50,6 +61,7 @@ export function ResultsView({
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8">
+      <ScrollToTop />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{testTitle}</h1>
         <p className="text-muted-foreground mt-1 text-sm">Resultados</p>
@@ -70,11 +82,13 @@ export function ResultsView({
         <Stat label="Penalización aplicada" value={`-${penaltyApplied.toFixed(2)}`} />
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <Button render={<Link href="/dashboard" />}>Volver al dashboard</Button>
         <Button render={<Link href="/tests/new" />} variant="outline">
           Crear otro test
         </Button>
+        <SaveTestButton testId={testId} initialSaved={initialSaved} />
+        <ShareTestButton testId={testId} friends={friends} />
       </div>
 
       <div>

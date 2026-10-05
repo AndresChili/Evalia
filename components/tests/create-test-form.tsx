@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import type { z } from "zod";
 
@@ -25,22 +25,28 @@ type FormValues = z.infer<typeof createTestConfigSchema>;
 
 type DocumentOption = { id: string; originalFilename: string; charCount: number | null };
 
+function titleFromFilename(filename: string): string {
+  return filename.replace(/\.[^./]+$/, "");
+}
+
 export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [titleTouched, setTitleTouched] = useState(false);
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    setValue,
     setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(createTestConfigSchema),
     defaultValues: {
       documentId: documents[0]?.id ?? "",
-      title: "",
+      title: documents[0] ? titleFromFilename(documents[0].originalFilename) : "",
       questionType: "MULTIPLE_CHOICE",
       optionsCount: 4,
       questionCount: 10,
@@ -51,6 +57,15 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
 
   const questionType = watch("questionType");
   const scoringType = watch("scoringType");
+  const documentId = watch("documentId");
+  const titleField = register("title");
+
+  useEffect(() => {
+    if (titleTouched) return;
+    const doc = documents.find((d) => d.id === documentId);
+    if (doc) setValue("title", titleFromFilename(doc.originalFilename));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId]);
 
   function onSubmit(values: FormValues) {
     startTransition(async () => {
@@ -124,7 +139,15 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="title">Título del test</Label>
-        <Input id="title" placeholder="Ej. Tema 3 — Fotosíntesis" {...register("title")} />
+        <Input
+          id="title"
+          placeholder="Ej. Tema 3 — Fotosíntesis"
+          {...titleField}
+          onChange={(e) => {
+            setTitleTouched(true);
+            titleField.onChange(e);
+          }}
+        />
         {errors.title && <p className="text-destructive text-sm">{errors.title.message}</p>}
       </div>
 
