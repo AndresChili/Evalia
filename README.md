@@ -2,7 +2,7 @@
 
 > Convierte tus apuntes en tests de estudio, generados y validados por IA.
 
-**🚀 [Probar la aplicación](https://TU-URL-DE-VERCEL.vercel.app)** _(placeholder — se actualizará al desplegar)_
+**🚀 [Probar la aplicación](https://evalia-livid.vercel.app)**
 
 ---
 
