@@ -61,11 +61,13 @@ export function ShareTestButton({ testId, friends }: { testId: string; friends: 
       <div className="flex gap-2">
         <Select value={selected} onValueChange={(value) => setSelected(value ?? "")}>
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Elige un amigo" />
+            <SelectValue placeholder="Elige un amigo">
+              {(value: string) => friends.find((f) => f.id === value)?.displayName ?? "Elige un amigo"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {friends.map((f) => (
-              <SelectItem key={f.id} value={f.id}>
+              <SelectItem key={f.id} value={f.id} label={f.displayName}>
                 {f.displayName}
               </SelectItem>
             ))}

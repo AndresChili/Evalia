@@ -29,6 +29,25 @@ function titleFromFilename(filename: string): string {
   return filename.replace(/\.[^./]+$/, "");
 }
 
+function documentLabel(doc: DocumentOption): string {
+  return doc.charCount
+    ? `${doc.originalFilename} (${doc.charCount.toLocaleString("es-ES")} car.)`
+    : doc.originalFilename;
+}
+
+const QUESTION_TYPE_LABEL: Record<string, string> = {
+  MULTIPLE_CHOICE: "Alternativa múltiple",
+  TRUE_FALSE: "Verdadero/Falso",
+};
+
+const DIFFICULTY_LABEL: Record<string, string> = { LOW: "Bajo", MEDIUM: "Medio", HIGH: "Alto" };
+
+const SCORING_TYPE_LABEL: Record<string, string> = {
+  NO_PENALTY: "Sin penalización",
+  CUSTOM_PENALTY: "Penalización personalizada por fallo",
+  GROUPED_PENALTY: "Cada X fallos resta 1 punto",
+};
+
 export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -122,19 +141,19 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger id="documentId" className="w-full">
-                <SelectValue placeholder="Selecciona un documento" />
+                <SelectValue placeholder="Selecciona un documento">
+                  {(value: string) => {
+                    const doc = documents.find((d) => d.id === value);
+                    return doc ? documentLabel(doc) : "Selecciona un documento";
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {documents.map((doc) => {
-                  const label = doc.charCount
-                    ? `${doc.originalFilename} (${doc.charCount.toLocaleString("es-ES")} car.)`
-                    : doc.originalFilename;
-                  return (
-                    <SelectItem key={doc.id} value={doc.id} label={label}>
-                      {label}
-                    </SelectItem>
-                  );
-                })}
+                {documents.map((doc) => (
+                  <SelectItem key={doc.id} value={doc.id} label={documentLabel(doc)}>
+                    {documentLabel(doc)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}
@@ -164,11 +183,15 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger id="questionType" className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(value: string) => QUESTION_TYPE_LABEL[value]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MULTIPLE_CHOICE">Alternativa múltiple</SelectItem>
-                  <SelectItem value="TRUE_FALSE">Verdadero/Falso</SelectItem>
+                  <SelectItem value="MULTIPLE_CHOICE" label="Alternativa múltiple">
+                    Alternativa múltiple
+                  </SelectItem>
+                  <SelectItem value="TRUE_FALSE" label="Verdadero/Falso">
+                    Verdadero/Falso
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -187,11 +210,11 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
                   onValueChange={(v) => field.onChange(Number(v))}
                 >
                   <SelectTrigger id="optionsCount" className="w-full">
-                    <SelectValue />
+                    <SelectValue>{(value: string) => `${value} opciones`}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {[2, 3, 4, 5, 6].map((n) => (
-                      <SelectItem key={n} value={String(n)}>
+                      <SelectItem key={n} value={String(n)} label={`${n} opciones`}>
                         {n} opciones
                       </SelectItem>
                     ))}
@@ -226,12 +249,18 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger id="difficulty" className="w-full">
-                  <SelectValue />
+                  <SelectValue>{(value: string) => DIFFICULTY_LABEL[value]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="LOW">Bajo</SelectItem>
-                  <SelectItem value="MEDIUM">Medio</SelectItem>
-                  <SelectItem value="HIGH">Alto</SelectItem>
+                  <SelectItem value="LOW" label="Bajo">
+                    Bajo
+                  </SelectItem>
+                  <SelectItem value="MEDIUM" label="Medio">
+                    Medio
+                  </SelectItem>
+                  <SelectItem value="HIGH" label="Alto">
+                    Alto
+                  </SelectItem>
                 </SelectContent>
               </Select>
             )}
@@ -247,12 +276,18 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger id="scoringType" className="w-full">
-                <SelectValue />
+                <SelectValue>{(value: string) => SCORING_TYPE_LABEL[value]}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="NO_PENALTY">Sin penalización</SelectItem>
-                <SelectItem value="CUSTOM_PENALTY">Penalización personalizada por fallo</SelectItem>
-                <SelectItem value="GROUPED_PENALTY">Cada X fallos resta 1 punto</SelectItem>
+                <SelectItem value="NO_PENALTY" label={SCORING_TYPE_LABEL.NO_PENALTY}>
+                  Sin penalización
+                </SelectItem>
+                <SelectItem value="CUSTOM_PENALTY" label={SCORING_TYPE_LABEL.CUSTOM_PENALTY}>
+                  Penalización personalizada por fallo
+                </SelectItem>
+                <SelectItem value="GROUPED_PENALTY" label={SCORING_TYPE_LABEL.GROUPED_PENALTY}>
+                  Cada X fallos resta 1 punto
+                </SelectItem>
               </SelectContent>
             </Select>
           )}
