@@ -55,3 +55,21 @@ export async function uploadAvatarAction(
   // servidor sí haya cambiado). La caché HTTP real la gestiona el ETag en la ruta.
   return { avatarUrl: `/api/avatars/${session.user.id}?v=${Date.now()}` };
 }
+
+export async function deleteAvatarAction(): Promise<{ error?: string }> {
+  const session = await auth();
+  if (!session?.user) return { error: "No autenticado." };
+
+  const profile = await db.profile.findUnique({ where: { userId: session.user.id } });
+  if (!profile) return { error: "Perfil no encontrado." };
+  if (!profile.avatarPathname) return {};
+
+  await del(profile.avatarPathname).catch(() => {});
+
+  await db.profile.update({
+    where: { userId: session.user.id },
+    data: { avatarPathname: null },
+  });
+
+  return {};
+}

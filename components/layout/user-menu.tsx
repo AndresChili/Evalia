@@ -28,6 +28,7 @@ export function UserMenu({ name, avatarUrl }: { name: string; avatarUrl?: string
             alt={name}
             width={32}
             height={32}
+            unoptimized
             className="size-8 rounded-full object-cover"
           />
         ) : (
