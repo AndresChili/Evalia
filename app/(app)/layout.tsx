@@ -7,6 +7,7 @@ import { db } from "@/lib/db";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { UserMenu } from "@/components/layout/user-menu";
+import { InstallAppButton } from "@/components/pwa/install-button";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <span className="font-semibold tracking-tight">Evalia</span>
         </Link>
         <SidebarNav unreadCount={unreadCount} />
+        <InstallAppButton className="mt-auto w-full" />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
