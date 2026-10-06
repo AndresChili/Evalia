@@ -15,8 +15,8 @@ externo del modelo. Puedes hacerlo en **modo estudio** (feedback inmediato) o **
 
 ## Estado del proyecto
 
-✅ Funcionalmente completo (fases 1–11 del roadmap). Pendiente el despliegue a producción —
-ver [Roadmap](#roadmap).
+Funcionalmente completo y desplegado en Vercel (enlace arriba). Sigue siendo un proyecto personal
+en el que itero de vez en cuando — ver [Qué se ha construido](#qué-se-ha-construido).
 
 ## Características
 
@@ -154,38 +154,31 @@ método de pago asociado — por diseño. Al tocar el límite gratuito, el servi
 de forma controlada, nunca cobra automáticamente. Si en algún momento se plantea pasar a un plan de
 pago (más cuota de IA, más storage, etc.), es una decisión explícita, no algo que ocurra solo.
 
-## Roadmap
+## Qué se ha construido
 
-- [x] Fase 1 — Análisis y arquitectura
-- [x] Fase 2 — Configuración del proyecto (Next.js, TS, Tailwind, Prisma, Auth.js, testing, tooling)
-- [x] Fase 3 — Base de datos y autenticación (registro, login, logout, recuperación/cambio de
-      contraseña, perfil, protección de rutas)
-- [x] Fase 4 — Sistema de documentos (subida, validación, extracción PDF/DOCX/OCR, chunking,
-      storage privado, borrado automático del original)
-- [x] Fase 5 — Motor de IA (generación estructurada, grounding, deduplicación, segunda pasada de
-      validación con proveedor distinto, límite de intentos; ver `docs/ai-pipeline.md`)
-- [x] Fase 6 — Sistema de tests (modo estudio con feedback inmediato, modo examen sin pistas,
-      3 sistemas de puntuación con `decimal.js` para precisión exacta, pantalla de resultados y
-      revisión)
-- [x] Fase 7 — Tests guardados e historial (guardar/desguardar, repetir un test guardado crea un
-      intento nuevo sobre el mismo snapshot, historial de intentos, dashboard con datos reales)
-- [x] Fase 8 — Sistema social (buscar usuarios, solicitudes de amistad, compartir tests con amigos
-      — el receptor recibe una copia independiente, no una referencia —, notificaciones)
-- [x] Fase 9 — Refinamiento UI/UX: landing real (antes placeholder), color de marca (antes gris
-      shadcn por defecto), sidebar de navegación (antes 8 enlaces en una fila), foto de perfil.
-      Pendiente como mejora continua: auditoría de accesibilidad formal, revisión responsive
-      exhaustiva en pantallas pequeñas, estados de carga/error más pulidos en cada pantalla
-- [x] Fase 10 — Testing y auditoría de seguridad (auditoría IDOR de todas las Server Actions y
-      rutas dinámicas, headers de seguridad, CSP, rate limiting real con Upstash provisionado,
-      `SECURITY.md`; ver detalle completo ahí)
-- [x] Fase 11 — Documentación open source (`CONTRIBUTING.md`, `docs/architecture.md`, plantillas
-      de issue/PR, repaso de higiene del README)
-- [ ] Fase 12 — Despliegue en Vercel
+- Autenticación completa: registro, login, recuperación/cambio de contraseña, perfil con avatar,
+  rutas protegidas.
+- Sistema de documentos: subida, validación por contenido real (no por extensión), extracción de
+  texto (PDF/DOCX/OCR) y borrado automático del archivo original tras procesarlo.
+- Motor de IA con pipeline de varias etapas (generación → grounding → deduplicación → segunda
+  validación con otro proveedor) — detalle en [`docs/ai-pipeline.md`](./docs/ai-pipeline.md).
+- Tests en modo estudio o examen, tres sistemas de puntuación, guardado e historial de intentos.
+- Sistema social: amigos, compartir tests guardados, notificaciones.
+- Testing automatizado y auditoría de seguridad (IDOR, headers, CSP, rate limiting) — detalle en
+  [`SECURITY.md`](./SECURITY.md).
+
+Pendiente como mejora continua: auditoría de accesibilidad formal y revisión responsive más
+exhaustiva en pantallas pequeñas.
 
 ## Contribución
 
 Proyecto personal/educativo abierto a sugerencias. Ver [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 para cómo configurar el entorno, convenciones del proyecto, y qué comprobar antes de un PR.
+
+## Nota
+
+`AGENTS.md` y `CLAUDE.md` son configuración de mi editor/asistente de desarrollo, no documentación
+del producto — ignóralos si no usas las mismas herramientas.
 
 ## Licencia
 

@@ -34,10 +34,10 @@ const recurso = await db.modelo.findUnique({ where: { id } });
 if (!recurso || recurso.userId !== session.user.id) return { error: "No encontrado." };
 ```
 
-Verificado explícitamente (no solo por inspección de código, con scripts de integración reales
-contra la base de datos) en: documentos, tests, intentos, solicitudes de amistad y tests
-compartidos — un usuario no puede leer, modificar ni aceptar/rechazar un recurso ajeno
-manipulando el id en la URL o en la llamada a la action.
+Lo he probado con scripts de integración reales contra la base de datos (no solo revisando el
+código) en documentos, tests, intentos, solicitudes de amistad y tests compartidos — un usuario
+no puede leer, modificar ni aceptar/rechazar un recurso ajeno manipulando el id en la URL o en la
+llamada a la action.
 
 ## Subida de archivos
 
@@ -54,7 +54,7 @@ manipulando el id en la URL o en la llamada a la action.
 - Documentos y avatares viven en un store de Vercel Blob **privado** — nunca accesibles por URL
   pública directa. Los avatares se sirven a través de una ruta propia autenticada
   (`app/api/avatars/[userId]/route.ts`) que exige sesión antes de leer del store.
-- Verificado explícitamente que un blob privado no responde en una URL pública directa.
+- Comprobado manualmente que un blob privado no responde en una URL pública directa.
 
 ## Rate limiting
 
@@ -102,8 +102,8 @@ archivo original. Detalle completo del pipeline de generación en
 - Ninguna clave/API key/secreto vive en el repositorio — todas en variables de entorno
   (`.env.local` en desarrollo, Vercel en producción). `.env*` está en `.gitignore`; solo
   `.env.example` (sin valores reales) se versiona.
-- Verificado explícitamente con `git status` / `git ls-files` que ningún archivo `.env` real ha
-  llegado a estar tracked.
+- Revisado con `git status` / `git ls-files` que ningún archivo `.env` real ha llegado a estar
+  tracked.
 
 ## Dependencias — vulnerabilidades conocidas aceptadas
 

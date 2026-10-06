@@ -7,9 +7,8 @@ import type { LanguageModel } from "ai";
  * nunca directamente con @ai-sdk/groq o @ai-sdk/google — cambiar de proveedor es cambiar
  * este archivo, no el pipeline.
  *
- * Por defecto usamos solo proveedores con tier gratuito sin tarjeta (Groq + Gemini). Ver
- * memoria del proyecto / README sección "Coste": no se activa ningún proveedor de pago sin
- * autorización explícita.
+ * Por defecto usamos solo proveedores con tier gratuito sin tarjeta (Groq + Gemini). Ver la
+ * sección "Coste" del README: no se activa ningún proveedor de pago sin decidirlo explícitamente.
  */
 
 const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });

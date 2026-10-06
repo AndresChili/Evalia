@@ -81,9 +81,9 @@ despliegue, no un bug silencioso (documentado en `SECURITY.md`).
 
 - **`Test` es un snapshot inmutable.** Una vez generado, un test (preguntas, opciones) no cambia.
   "Guardar un test" es solo un marcador (`SavedTest`) sobre ese snapshot — repetirlo es crear un
-  nuevo `TestAttempt` contra el mismo `Test`, nunca regenerar contenido. Esto se decidió
-  explícitamente así (no "generar variante nueva cada vez") tras validarlo con el responsable del
-  proyecto.
+  nuevo `TestAttempt` contra el mismo `Test`, nunca regenerar contenido. Lo decidí así (en vez de
+  "generar variante nueva cada vez") para que un test guardado sea siempre exactamente lo que se
+  compartió o se repitió la primera vez.
 - **`Test.documentId` es nullable con `onDelete: SetNull`.** El documento origen puede borrarse
   (por privacidad, o simplemente porque el usuario lo borra) sin romper los tests ya generados a
   partir de él — cada `Question` guarda su propia cita literal (`sourceQuote`), no depende de que
@@ -92,8 +92,8 @@ despliegue, no un bug silencioso (documentado en `SECURITY.md`).
   podría repetir el mismo test guardado en ambos modos — justo lo que pide la especificación
   original.
 - **Compartir un test clona todo el contenido**, no crea una referencia. `originTestId` traza de
-  dónde vino la copia, pero borrar el test original no afecta a la copia del receptor —
-  verificado explícitamente con un test de integración.
+  dónde vino la copia, pero borrar el test original no afecta a la copia del receptor — lo cubre
+  un test de integración.
 
 ## Lo que se dejó fuera a propósito (por ahora)
 
