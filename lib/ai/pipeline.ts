@@ -102,7 +102,7 @@ export async function runGenerationPipeline(testId: string, chunks: ChunkInput[]
         }
 
         try {
-          const { isValid } = await validateWithAI(candidate, chunk.content);
+          const { isValid } = await validateWithAI(candidate, chunk.content, config.difficulty);
           if (!isValid) {
             discarded += 1;
             continue;

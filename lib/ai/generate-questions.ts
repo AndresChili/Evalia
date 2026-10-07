@@ -5,10 +5,10 @@ import { questionBatchSchema, type QuestionCandidate } from "@/lib/ai/schemas";
 import type { Difficulty, QuestionType } from "@/lib/generated/prisma/enums";
 
 const DIFFICULTY_GUIDANCE: Record<Difficulty, string> = {
-  LOW: "Preguntas literales: lo que el texto dice explícitamente, sin necesidad de relacionar conceptos.",
+  LOW: "Preguntas literales: lo que el texto dice explícitamente, sin necesidad de relacionar conceptos. Los distractores pueden ser claramente incorrectos.",
   MEDIUM:
-    "Preguntas que requieren comprender y relacionar dos o más ideas del fragmento, no solo localizar una frase.",
-  HIGH: "Preguntas que requieren comparar, aplicar o interpretar conceptos del fragmento — más razonamiento, pero la respuesta sigue debiendo poder justificarse solo con este texto.",
+    "Preguntas que requieren comprender y relacionar dos o más ideas del fragmento, no solo localizar una frase. Los distractores deben ser plausibles y del mismo tema — prohibido que la opción correcta sea obvia a simple vista por descarte rápido de las demás.",
+  HIGH: "Preguntas que requieren comparar, aplicar o interpretar conceptos del fragmento — máximo razonamiento posible, pero la respuesta sigue debiendo poder justificarse ÚNICAMENTE con este texto (nada de conocimiento externo aunque sea verdadero). Los distractores deben ser muy plausibles, basados en matices, excepciones o datos reales del propio fragmento mal combinados — nunca inventados ni absurdos. Si una opción incorrecta puede descartarse sin haber leído el fragmento con atención, la pregunta no cumple este nivel.",
 };
 
 type GenerateParams = {

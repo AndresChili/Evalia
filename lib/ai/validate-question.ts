@@ -3,7 +3,14 @@ import { generateObject } from "ai";
 import { getValidatorModel } from "@/lib/ai/provider";
 import { isGrounded } from "@/lib/ai/grounding";
 import { validationResultSchema, type QuestionCandidate } from "@/lib/ai/schemas";
-import type { QuestionType } from "@/lib/generated/prisma/enums";
+import type { Difficulty, QuestionType } from "@/lib/generated/prisma/enums";
+
+const DIFFICULTY_CHECK: Record<Difficulty, string> = {
+  LOW: "Nivel BAJO: basta con que sea literal del texto.",
+  MEDIUM:
+    "Nivel MEDIO: rechaza si la respuesta correcta es obvia por descarte rápido de las demás opciones, o si no hace falta relacionar al menos dos ideas del fragmento.",
+  HIGH: "Nivel ALTO: rechaza si cualquier distractor es absurdo, irrelevante o descartable sin leer el fragmento con atención, o si la pregunta no exige comparar/aplicar/interpretar conceptos del texto.",
+};
 
 export type RejectionReason =
   "malformed_options" | "not_grounded" | "ai_validation_failed" | "duplicate";
@@ -45,18 +52,21 @@ export function checkGrounding(candidate: QuestionCandidate, chunkContent: strin
 export async function validateWithAI(
   candidate: QuestionCandidate,
   chunkContent: string,
+  difficulty: Difficulty,
 ): Promise<{ isValid: boolean; reason: string }> {
   const prompt = `Fragmento original:
 """
 ${chunkContent}
 """
 
-Pregunta generada a revisar:
+Pregunta generada a revisar (dificultad objetivo: ${difficulty}):
 - Enunciado: ${candidate.prompt}
 - Opciones: ${candidate.options.map((o) => `${o.isCorrect ? "[CORRECTA] " : ""}${o.text}`).join(" | ")}
 - Cita que supuestamente respalda la respuesta: "${candidate.sourceQuote}"
 
-Evalúa como revisor estricto: ¿la pregunta es inequívoca, tiene una única respuesta correcta, y esa respuesta está realmente respaldada por el fragmento (no por conocimiento externo)? Marca isValid=false si hay cualquier ambigüedad, si la cita no respalda realmente la respuesta marcada como correcta, o si una opción incorrecta también podría defenderse como correcta con el texto dado.`;
+Evalúa como revisor estricto: ¿la pregunta es inequívoca, tiene una única respuesta correcta, y esa respuesta está realmente respaldada por el fragmento (no por conocimiento externo)? Marca isValid=false si hay cualquier ambigüedad, si la cita no respalda realmente la respuesta marcada como correcta, o si una opción incorrecta también podría defenderse como correcta con el texto dado.
+
+Además, comprueba que cumple la dificultad pedida: ${DIFFICULTY_CHECK[difficulty]}`;
 
   const { object } = await generateObject({
     model: getValidatorModel(),

@@ -88,12 +88,18 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
 
   function onSubmit(values: FormValues) {
     startTransition(async () => {
-      const result = await createTestAction(values);
-      if (result.error) {
-        setError("root", { message: result.error });
-        return;
+      try {
+        const result = await createTestAction(values);
+        if (result.error) {
+          setError("root", { message: result.error });
+          return;
+        }
+        router.push(`/tests/${result.testId}`);
+      } catch {
+        setError("root", {
+          message: "Algo falló al generar el test. Inténtalo de nuevo.",
+        });
       }
-      router.push(`/tests/${result.testId}`);
     });
   }
 
@@ -158,6 +164,9 @@ export function CreateTestForm({ documents }: { documents: DocumentOption[] }) {
             </Select>
           )}
         />
+        {errors.documentId && (
+          <p className="text-destructive text-sm">{errors.documentId.message}</p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

@@ -129,3 +129,26 @@ export async function finishAttemptAction(input: unknown): Promise<ActionResult>
 
   return { attemptId: attempt.id };
 }
+
+export async function deleteAttemptAction(attemptId: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "No autenticado." };
+
+  const attempt = await db.testAttempt.findUnique({ where: { id: attemptId } });
+  if (!attempt || attempt.userId !== session.user.id) {
+    return { error: "Intento no encontrado." };
+  }
+
+  await db.testAttempt.delete({ where: { id: attemptId } });
+
+  return {};
+}
+
+export async function deleteAllAttemptsAction(): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { error: "No autenticado." };
+
+  await db.testAttempt.deleteMany({ where: { userId: session.user.id } });
+
+  return {};
+}
