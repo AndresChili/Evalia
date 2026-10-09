@@ -166,8 +166,3 @@ pago (más cuota de IA, más storage, etc.), es una decisión explícita, no alg
 
 Pendiente como mejora continua: auditoría de accesibilidad formal y revisión responsive más
 exhaustiva en pantallas pequeñas.
-
-## Nota
-
-`AGENTS.md` y `CLAUDE.md` son configuración de mi editor/asistente de desarrollo, no documentación
-del producto — ignóralos si no usas las mismas herramientas.

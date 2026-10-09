@@ -49,5 +49,9 @@ next-env.d.ts
 /.windsurf
 skills-lock.json
 
+# archivos de contexto para asistentes IA, regenerados automáticamente por next dev — no son código del proyecto
+/AGENTS.md
+/CLAUDE.md
+
 # prompt original usado para construir el proyecto, fuera del repo público
 /PROMPT EVALIA.txt
