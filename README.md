@@ -144,8 +144,6 @@ npm run db:studio      # Prisma Studio
   opción de conservarlo, por simplicidad y para minimizar qué se almacena.
 - Variables sensibles únicamente en entorno (Vercel / `.env` local), nunca en el repositorio.
 
-Detalle completo, incluidas limitaciones conocidas, en [`SECURITY.md`](./SECURITY.md).
-
 ## Coste
 
 Todo el stack corre en planes gratuitos (Vercel Hobby, Neon free tier, Upstash free tier, Vercel
@@ -164,22 +162,12 @@ pago (más cuota de IA, más storage, etc.), es una decisión explícita, no alg
   validación con otro proveedor) — detalle en [`docs/ai-pipeline.md`](./docs/ai-pipeline.md).
 - Tests en modo estudio o examen, tres sistemas de puntuación, guardado e historial de intentos.
 - Sistema social: amigos, compartir tests guardados, notificaciones.
-- Testing automatizado y auditoría de seguridad (IDOR, headers, CSP, rate limiting) — detalle en
-  [`SECURITY.md`](./SECURITY.md).
+- Testing automatizado y auditoría de seguridad (IDOR, headers, CSP, rate limiting).
 
 Pendiente como mejora continua: auditoría de accesibilidad formal y revisión responsive más
 exhaustiva en pantallas pequeñas.
-
-## Contribución
-
-Proyecto personal/educativo abierto a sugerencias. Ver [`CONTRIBUTING.md`](./CONTRIBUTING.md)
-para cómo configurar el entorno, convenciones del proyecto, y qué comprobar antes de un PR.
 
 ## Nota
 
 `AGENTS.md` y `CLAUDE.md` son configuración de mi editor/asistente de desarrollo, no documentación
 del producto — ignóralos si no usas las mismas herramientas.
-
-## Licencia
-
-[MIT](./LICENSE)
